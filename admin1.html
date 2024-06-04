@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница администратора</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .header button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 16px;
+        }
+        .header button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .user-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .user-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-history {
+            margin-top: 10px;
+        }
+        .user-history a {
+            color: #008CBA;
+            text-decoration: none;
+        }
+        .user-history a:hover {
+            text-decoration: underline;
+        }
+        .delete-button {
+            padding: 10px 20px;
+            background-color: #FF6347;
+            color: white;
+            border: 1px solid #FF6347;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #FF4500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="logout()">Выход</button>
+    </div>
+
+    <div class="container">
+        <h2>Список пользователей</h2>
+        <ul class="user-list">
+            <li class="user-item">
+                <div class="user-details">
+                    <strong>Пользователь 1</strong>
+                    <div class="user-history">
+                        <a href="https://example.com/news1">https://example.com/news1</a>
+                        <a href="https://example.com/news2">https://example.com/news2</a>
+                    </div>
+                </div>
+                <button class="delete-button" onclick="deleteUser(1)">Удалить</button>
+            </li>
+            <li class="user-item">
+                <div class="user-details">
+                    <strong>Пользователь 2</strong>
+                    <div class="user-history">
+                        <a href="https://example.com/news3">https://example.com/news3</a>
+                        <a href="https://example.com/news4">https://example.com/news4</a>
+                    </div>
+                </div>
+                <button class="delete-button" onclick="deleteUser(2)">Удалить</button>
+            </li>
+            <!-- Добавьте больше блоков user-item для отображения дополнительных пользователей -->
+        </ul>
+    </div>
+
+    <script>
+        function logout() {
+            alert("Функция выхода еще не реализована.");
+        }
+
+        function deleteUser(userId) {
+            if(confirm("Вы действительно хотите удалить этого пользователя?")) {
+                alert("Пользователь " + userId + " был удален.");
+                // Здесь будет ваш код для удаления пользователя
+            }
+        }
+    </script>
+
+</body>
+</html>

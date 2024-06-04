@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Определение ложных новостей</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .header button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: 1px solid #4CAF50;
+            cursor: pointer;
+            margin-left: 10px;
+	    width: 120px;  /* Задаем ширину кнопки */
+            height: 35px;
+        }
+        .header button:hover {
+            background-color: #45a049;
+        }
+        .account-info {
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-left: 10px;
+            text-align: center;
+            min-width: 150px;
+            flex-shrink: 0;
+	    width: 300px; /* Изменение ширины блока */
+            height: 35px; /* Изменение высоты блока */
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .container input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .container button:hover {
+            background-color: #007B9E;
+        }
+        .output-block {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="account-info">
+            <p>Добро пожаловать, <strong>Пользователь</strong></p>
+        </div>
+        <button onclick="viewHistory()">История</button>
+        <button onclick="logout()">Выход</button>
+    </div>
+
+    <div class="container">
+        <h2>Проверка новостей на достоверность</h2>
+        <input type="text" id="newsUrl" placeholder="Введите ссылку на новость">
+        <button onclick="checkNews()">Проверить новость</button>
+
+        <div class="output-block" id="newsContent">
+            <h3>Новость:</h3>
+            <p id="newsText">Здесь будет отображаться текст новости...</p>
+        </div>
+        
+        <div class="output-block" id="checkResult">
+            <h3>Результат проверки:</h3>
+            <p id="resultText">Здесь будет отображаться результат проверки...</p>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            alert("Функция выхода еще не реализована.");
+        }
+
+        function viewHistory() {
+            alert("Перейти к истории проверок.");
+            window.location.href = 'history.html';  // Перейти на страницу истории
+        }
+
+        function checkNews() {
+            var url = document.getElementById('newsUrl').value;
+            if(url === "") {
+                alert("Пожалуйста, введите ссылку на новость.");
+                return;
+            }
+            document.getElementById('newsText').innerText = "Загрузка новости с " + url;
+            document.getElementById('resultText').innerText = "Проверка новости на достоверность...";
+            
+            // Здесь будет ваш код для проверки новости
+            // В данном примере просто имитируется процесс проверки
+            setTimeout(function() {
+                document.getElementById('newsText').innerText = "Пример текста новости с " + url;
+                document.getElementById('resultText').innerText = "Результат проверки: Ложная новость";
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>

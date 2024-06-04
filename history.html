@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История проверок новостей</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .header button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .header button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .news-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        .news-item h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .news-item p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .news-item a {
+            color: #008CBA;
+            text-decoration: none;
+        }
+        .news-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="goBack()">Назад</button>
+    </div>
+
+    <div class="container">
+        <h2>История проверок новостей</h2>
+
+        <div class="news-item">
+            <h3><a href="https://example.com/news1" target="_blank">Новость 1</a></h3>
+            <p><strong>Ссылка:</strong> <a href="https://example.com/news1" target="_blank">https://example.com/news1</a></p>
+            <p><strong>Текст новости:</strong> Пример текста новости 1...</p>
+            <p><strong>Результат проверки:</strong> Ложная новость</p>
+        </div>
+
+        <div class="news-item">
+            <h3><a href="https://example.com/news2" target="_blank">Новость 2</a></h3>
+            <p><strong>Ссылка:</strong> <a href="https://example.com/news2" target="_blank">https://example.com/news2</a></p>
+            <p><strong>Текст новости:</strong> Пример текста новости 2...</p>
+            <p><strong>Результат проверки:</strong> Достоверная новость</p>
+        </div>
+
+        <div class="news-item">
+            <h3><a href="https://example.com/news3" target="_blank">Новость 3</a></h3>
+            <p><strong>Ссылка:</strong> <a href="https://example.com/news3" target="_blank">https://example.com/news3</a></p>
+            <p><strong>Текст новости:</strong> Пример текста новости 3...</p>
+            <p><strong>Результат проверки:</strong> Ложная новость</p>
+        </div>
+        
+        <!-- Добавьте больше новостных элементов по мере необходимости -->
+
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = 'index.html'; // Замените 'index.html' на URL вашей главной страницы
+        }
+    </script>
+
+</body>
+</html>
