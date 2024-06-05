@@ -58,16 +58,6 @@
             display: flex;
             flex-direction: column;
         }
-        .user-history {
-            margin-top: 10px;
-        }
-        .user-history a {
-            color: #008CBA;
-            text-decoration: none;
-        }
-        .user-history a:hover {
-            text-decoration: underline;
-        }
         .delete-button {
             padding: 10px 20px;
             background-color: #FF6347;
@@ -89,27 +79,14 @@
     <div class="container">
         <h2>Список пользователей</h2>
         <ul class="user-list">
+            {% for user in users %}
             <li class="user-item">
                 <div class="user-details">
-                    <strong>Пользователь 1</strong>
-                    <div class="user-history">
-                        <a href="https://example.com/news1">https://example.com/news1</a>
-                        <a href="https://example.com/news2">https://example.com/news2</a>
-                    </div>
+                    <strong>{{ user.login }}</strong>
                 </div>
-                <button class="delete-button" onclick="deleteUser(1)">Удалить</button>
+                <button class="delete-button" onclick="deleteUser({{ user.id }})">Удалить</button>
             </li>
-            <li class="user-item">
-                <div class="user-details">
-                    <strong>Пользователь 2</strong>
-                    <div class="user-history">
-                        <a href="https://example.com/news3">https://example.com/news3</a>
-                        <a href="https://example.com/news4">https://example.com/news4</a>
-                    </div>
-                </div>
-                <button class="delete-button" onclick="deleteUser(2)">Удалить</button>
-            </li>
-            <!-- Добавьте больше блоков user-item для отображения дополнительных пользователей -->
+            {% endfor %}
         </ul>
     </div>
 
@@ -118,10 +95,18 @@
             alert("Функция выхода еще не реализована.");
         }
 
-        function deleteUser(userId) {
+        async function deleteUser(userId) {
             if(confirm("Вы действительно хотите удалить этого пользователя?")) {
-                alert("Пользователь " + userId + " был удален.");
-                // Здесь будет ваш код для удаления пользователя
+                let response = await fetch(`/delete_user/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert("Пользователь был удален.");
+                    location.reload();
+                } else {
+                    alert("Ошибка при удалении пользователя.");
+                }
             }
         }
     </script>
