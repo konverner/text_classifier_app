@@ -71,36 +71,52 @@
 
     <div class="container">
         <h2>История проверок новостей</h2>
-
-        <div class="news-item">
-            <h3><a href="https://example.com/news1" target="_blank">Новость 1</a></h3>
-            <p><strong>Ссылка:</strong> <a href="https://example.com/news1" target="_blank">https://example.com/news1</a></p>
-            <p><strong>Текст новости:</strong> Пример текста новости 1...</p>
-            <p><strong>Результат проверки:</strong> Ложная новость</p>
+        <div id="historyContainer">
+            <!-- Здесь будут отображаться элементы истории -->
         </div>
-
-        <div class="news-item">
-            <h3><a href="https://example.com/news2" target="_blank">Новость 2</a></h3>
-            <p><strong>Ссылка:</strong> <a href="https://example.com/news2" target="_blank">https://example.com/news2</a></p>
-            <p><strong>Текст новости:</strong> Пример текста новости 2...</p>
-            <p><strong>Результат проверки:</strong> Достоверная новость</p>
-        </div>
-
-        <div class="news-item">
-            <h3><a href="https://example.com/news3" target="_blank">Новость 3</a></h3>
-            <p><strong>Ссылка:</strong> <a href="https://example.com/news3" target="_blank">https://example.com/news3</a></p>
-            <p><strong>Текст новости:</strong> Пример текста новости 3...</p>
-            <p><strong>Результат проверки:</strong> Ложная новость</p>
-        </div>
-        
-        <!-- Добавьте больше новостных элементов по мере необходимости -->
-
     </div>
 
     <script>
         function goBack() {
             window.location.href = 'index.html'; // Замените 'index.html' на URL вашей главной страницы
         }
+
+        async function loadHistory() {
+            const response = await fetch('/api/history');
+            const history = await response.json();
+            const historyContainer = document.getElementById('historyContainer');
+
+            history.forEach(item => {
+                const newsItem = document.createElement('div');
+                newsItem.classList.add('news-item');
+                
+                const newsTitle = document.createElement('h3');
+                const newsLink = document.createElement('a');
+                newsLink.href = item.url;
+                newsLink.target = '_blank';
+                newsLink.textContent = item.url;
+                newsTitle.appendChild(newsLink);
+                
+                const newsUrl = document.createElement('p');
+                newsUrl.innerHTML = `<strong>Ссылка:</strong> <a href="${item.url}" target="_blank">${item.url}</a>`;
+                
+                const newsText = document.createElement('p');
+                newsText.innerHTML = `<strong>Текст новости:</strong> ${item.news_text.substring(0, 100)}...`;
+                
+                const newsResult = document.createElement('p');
+                newsResult.innerHTML = `<strong>Результат проверки:</strong> ${item.result}`;
+                
+                newsItem.appendChild(newsTitle);
+                newsItem.appendChild(newsUrl);
+                newsItem.appendChild(newsText);
+                newsItem.appendChild(newsResult);
+                
+                historyContainer.appendChild(newsItem);
+            });
+        }
+
+        // Загрузка истории при загрузке страницы
+        window.onload = loadHistory;
     </script>
 
 </body>

@@ -28,7 +28,7 @@
             border: 1px solid #4CAF50;
             cursor: pointer;
             margin-left: 10px;
-	    width: 120px;  /* Задаем ширину кнопки */
+            width: 120px;
             height: 35px;
         }
         .header button:hover {
@@ -43,8 +43,8 @@
             text-align: center;
             min-width: 150px;
             flex-shrink: 0;
-	    width: 300px; /* Изменение ширины блока */
-            height: 35px; /* Изменение высоты блока */
+            width: 300px;
+            height: 35px;
         }
         .container {
             width: 100%;
@@ -107,16 +107,7 @@
     </div>
 
     <script>
-        function logout() {
-            alert("Функция выхода еще не реализована.");
-        }
-
-        function viewHistory() {
-            alert("Перейти к истории проверок.");
-            window.location.href = 'history.html';  // Перейти на страницу истории
-        }
-
-        function checkNews() {
+        async function checkNews() {
             var url = document.getElementById('newsUrl').value;
             if(url === "") {
                 alert("Пожалуйста, введите ссылку на новость.");
@@ -124,13 +115,31 @@
             }
             document.getElementById('newsText').innerText = "Загрузка новости с " + url;
             document.getElementById('resultText').innerText = "Проверка новости на достоверность...";
-            
-            // Здесь будет ваш код для проверки новости
-            // В данном примере просто имитируется процесс проверки
-            setTimeout(function() {
-                document.getElementById('newsText').innerText = "Пример текста новости с " + url;
-                document.getElementById('resultText').innerText = "Результат проверки: Ложная новость";
-            }, 2000);
+
+            try {
+                let response = await fetch("/api/check_news", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                let data = await response.json();
+                document.getElementById('newsText').innerText = data.news_text;
+                document.getElementById('resultText').innerText = data.result;
+            } catch (error) {
+                document.getElementById('newsText').innerText = "Ошибка загрузки новости";
+                document.getElementById('resultText').innerText = "Ошибка проверки новости";
+            }
+        }
+
+        function logout() {
+            window.location.href = '/login';  // Перейти на страницу истории
+        }
+
+        function viewHistory() {
+            window.location.href = '/history';  // Перейти на страницу истории
         }
     </script>
 

@@ -1,15 +1,20 @@
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
-from typing import Dict
+from typing import Dict, List
+import httpx
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # Временное хранилище пользователей
 users: Dict[str, str] = {"admin": generate_password_hash("admin")}
+
+# Временное хранилище истории проверок
+history: List[Dict[str, str]] = []
 
 # Модель для формы регистрации
 class RegisterForm(BaseModel):
@@ -20,6 +25,9 @@ class RegisterForm(BaseModel):
 class LoginForm(BaseModel):
     login: str
     password: str
+
+class NewsCheckRequest(BaseModel):
+    url: str
 
 @app.get("/", response_class=HTMLResponse)
 async def get_registration_page(request: Request):
@@ -36,6 +44,18 @@ async def get_user_page(request: Request):
 @app.get("/admin_page", response_class=HTMLResponse)
 async def get_admin_page(request: Request):
     return templates.TemplateResponse("admin_page.html", {"request": request})
+
+@app.get("/user_list", response_class=HTMLResponse)
+async def get_history_page(request: Request):
+    return templates.TemplateResponse("user_list.html", {"request": request})
+
+@app.get("/history", response_class=HTMLResponse)
+async def get_history_page(request: Request):
+    return templates.TemplateResponse("history.html", {"request": request})
+
+@app.get("/api/history", response_class=JSONResponse)
+async def get_history():
+    return JSONResponse(content=history)
 
 @app.post("/register", response_class=HTMLResponse)
 async def register(request: Request, login: str = Form(...), password: str = Form(...)):
@@ -55,6 +75,26 @@ async def login(request: Request, login: str = Form(...), password: str = Form(.
         return RedirectResponse(url="/admin_page", status_code=302)
     
     return RedirectResponse(url="/user_page", status_code=302)
+
+@app.post("/api/check_news", response_class=JSONResponse)
+async def check_news(request: NewsCheckRequest):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(request.url)
+    
+    soup = BeautifulSoup(response.content, "html.parser")
+    news_text = " ".join([p.get_text() for p in soup.find_all("p")])
+    
+    # Логика проверки новости (для примера считаем новость ложной)
+    result = "Результат проверки: Ложная новость"
+    
+    # Добавление в историю
+    history.append({
+        "url": request.url,
+        "news_text": news_text,
+        "result": result
+    })
+    
+    return {"news_text": news_text, "result": result}
 
 if __name__ == '__main__':
     import uvicorn
