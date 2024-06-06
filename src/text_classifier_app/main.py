@@ -4,8 +4,10 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
 from typing import Dict, List
-import httpx
-from bs4 import BeautifulSoup
+
+from language_model import BertModel
+from parser import parse_page
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -15,6 +17,9 @@ users: Dict[str, str] = {"admin": generate_password_hash("admin")}
 
 # Временное хранилище истории проверок
 history: List[Dict[str, str]] = []
+
+# Языковая модель
+language_model = BertModel("../data/models/")
 
 # Модель для формы регистрации
 class RegisterForm(BaseModel):
@@ -55,7 +60,6 @@ async def get_user_list(request: Request):
     user_list = [{"login": login} for login in users]
     return templates.TemplateResponse("user_list.html", {"request": request, "users": user_list})
 
-
 @app.get("/history", response_class=HTMLResponse)
 async def get_history_page(request: Request):
     return templates.TemplateResponse("history.html", {"request": request})
@@ -85,15 +89,20 @@ async def login(request: Request, login: str = Form(...), password: str = Form(.
 
 @app.post("/api/check_news", response_class=JSONResponse)
 async def check_news(request: NewsCheckRequest):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(request.url)
     
-    soup = BeautifulSoup(response.content, "html.parser")
-    news_text = " ".join([p.get_text() for p in soup.find_all("p")])
+    response = parse_page(request.url)
     
-    # Логика проверки новости (для примера считаем новость ложной)
-    result = "Результат проверки: Ложная новость"
+    if response['status']['code'] == 0:
+        language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
+        print(f"language_model_output {language_model_output}")
+
+        result = f"Вероятность фейковой новости: {round(1 - language_model_output['score'],3)}"
+
+    if response['status']['code'] == 1:
+        result = response['status']['message']
     
+    news_text = response['content']['paragraphs']
+
     # Добавление в историю
     history.append({
         "url": request.url,
