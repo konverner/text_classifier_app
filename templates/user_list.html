@@ -84,7 +84,7 @@
                 <div class="user-details">
                     <strong>{{ user.login }}</strong>
                 </div>
-                <button class="delete-button" onclick="deleteUser({{ user.id }})">Удалить</button>
+                <button class="delete-button" onclick="deleteUser('{{ user.login }}')">Удалить</button>
             </li>
             {% endfor %}
         </ul>
@@ -92,12 +92,12 @@
 
     <script>
         function logout() {
-            alert("Функция выхода еще не реализована.");
+            window.location.href = '/login';
         }
 
-        async function deleteUser(userId) {
+        async function deleteUser(userLogin) {
             if(confirm("Вы действительно хотите удалить этого пользователя?")) {
-                let response = await fetch(`/delete_user/${userId}`, {
+                let response = await fetch(`/delete_user/${userLogin}`, {
                     method: 'DELETE'
                 });
 

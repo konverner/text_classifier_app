@@ -31,6 +31,10 @@ class NewsCheckRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def get_registration_page(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/registration", response_class=HTMLResponse)
+async def get_registration_page(request: Request):
     return templates.TemplateResponse("registration.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
@@ -46,8 +50,11 @@ async def get_admin_page(request: Request):
     return templates.TemplateResponse("admin_page.html", {"request": request})
 
 @app.get("/user_list", response_class=HTMLResponse)
-async def get_history_page(request: Request):
-    return templates.TemplateResponse("user_list.html", {"request": request})
+async def get_user_list(request: Request):
+    # Prepare user data for the template
+    user_list = [{"login": login} for login in users]
+    return templates.TemplateResponse("user_list.html", {"request": request, "users": user_list})
+
 
 @app.get("/history", response_class=HTMLResponse)
 async def get_history_page(request: Request):

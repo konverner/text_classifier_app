@@ -1,1 +1,130 @@
-...
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Определение ложных новостей</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .header button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .header button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .container input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .container button:hover {
+            background-color: #007B9E;
+        }
+        .output-block {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="login()">Вход</button>
+        <button onclick="register()">Регистрация</button>
+    </div>
+
+    <div class="container">
+        <h2>Проверка новостей на достоверность</h2>
+        <input type="text" id="newsUrl" placeholder="Введите ссылку на новость">
+        <button onclick="checkNews()">Проверить новость</button>
+
+        <div class="output-block" id="newsContent">
+            <h3>Новость:</h3>
+            <p id="newsText">Здесь будет отображаться текст новости...</p>
+        </div>
+        
+        <div class="output-block" id="checkResult">
+            <h3>Результат проверки:</h3>
+            <p id="resultText">Здесь будет отображаться результат проверки...</p>
+        </div>
+    </div>
+
+    <script>
+        async function checkNews() {
+            var url = document.getElementById('newsUrl').value;
+            if(url === "") {
+                alert("Пожалуйста, введите ссылку на новость.");
+                return;
+            }
+            document.getElementById('newsText').innerText = "Загрузка новости с " + url;
+            document.getElementById('resultText').innerText = "Проверка новости на достоверность...";
+
+            try {
+                let response = await fetch("/api/check_news", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                let data = await response.json();
+                document.getElementById('newsText').innerText = data.news_text;
+                document.getElementById('resultText').innerText = data.result;
+            } catch (error) {
+                document.getElementById('newsText').innerText = "Ошибка загрузки новости";
+                document.getElementById('resultText').innerText = "Ошибка проверки новости";
+            }
+        }
+
+        function login() {
+            window.location.href = '/login';  // Перейти на страницу истории
+        }
+
+        function register() {
+            window.location.href = '/registration';  // Перейти на страницу истории
+        }
+    </script>
+
+</body>
+</html>
