@@ -47,20 +47,25 @@
 
     <div class="container">
         <h2>Вход</h2>
-        <input type="text" id="login" placeholder="Логин">
-        <input type="password" id="password" placeholder="Пароль">
-        <button onclick="login()">Войти</button>
+        <form id="login-form">
+            <input type="text" id="login" name="login" placeholder="Логин">
+            <input type="password" id="password" name="password" placeholder="Пароль">
+            <button type="submit">Войти</button>
+        </form>
     </div>
 
     <script>
-        async function login() {
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+    
             var login = document.getElementById('login').value;
             var password = document.getElementById('password').value;
+    
             if(login === "" || password === "") {
                 alert("Пожалуйста, введите логин и пароль.");
                 return;
             }
-
+    
             let response = await fetch('/login', {
                 method: 'POST',
                 headers: {
@@ -68,13 +73,14 @@
                 },
                 body: `login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`
             });
-
+    
             if (response.ok) {
-                alert("Вы успешно вошли в систему!");
+                let redirectUrl = response.url;
+                window.location.href = redirectUrl;  // Redirect to the URL returned by the server
             } else {
                 alert("Ошибка входа: " + (await response.text()));
             }
-        }
+        });
     </script>
 
 </body>
