@@ -58,15 +58,30 @@
             display: flex;
             flex-direction: column;
         }
-        .delete-button {
+        .user-actions {
+            display: flex;
+            align-items: center;
+        }
+        .action-button {
             padding: 10px 20px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .delete-button {
             background-color: #FF6347;
             color: white;
             border: 1px solid #FF6347;
-            cursor: pointer;
         }
         .delete-button:hover {
             background-color: #FF4500;
+        }
+        .history-button {
+            background-color: #008CBA;
+            color: white;
+            border: 1px solid #008CBA;
+        }
+        .history-button:hover {
+            background-color: #007BB5;
         }
     </style>
 </head>
@@ -84,7 +99,10 @@
                 <div class="user-details">
                     <strong>{{ user.login }}</strong>
                 </div>
-                <button class="delete-button" onclick="deleteUser('{{ user.login }}')">Удалить</button>
+                <div class="user-actions">
+                    <button class="history-button" onclick="viewHistory('{{ user.login }}')">История</button>
+                    <button class="delete-button" onclick="deleteUser('{{ user.login }}')">Удалить</button>
+                </div>
             </li>
             {% endfor %}
         </ul>
@@ -107,6 +125,20 @@
                 } else {
                     alert("Ошибка при удалении пользователя.");
                 }
+            }
+        }
+
+        async function viewHistory(userLogin) {
+            let response = await fetch(`/api/user_history/${userLogin}`, {
+                method: 'GET'
+            });
+
+            if (response.ok) {
+                let history = await response.json();
+                let historyString = history.map(item => `URL: ${item.url}, Result: ${item.result}`).join('\n');
+                alert(`История пользователя ${userLogin}:\n${historyString}`);
+            } else {
+                alert("Ошибка при получении истории пользователя.");
             }
         }
     </script>
