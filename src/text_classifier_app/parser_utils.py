@@ -8,9 +8,14 @@ from selenium.webdriver.common.by import By
 
 
 source_name2tag = {
-    "dzen.ru": {"class": "news-story-redesign__summarization-item"},
-    "ria.ru": {"class": "article__block"},
-    "news.mail.ru": {"tag": "p"}
+    "dzen.ru": {
+        "class": [
+            "news-story-redesign__summarization-item",
+            "article-link__no-carrot-accents"
+        ]
+    },
+    "ria.ru": {"class": ["article__block"]},
+    "news.mail.ru": {"tag": ["p"]}
 }
 
 def parse_page(url: str):
@@ -55,14 +60,33 @@ def parse_page(url: str):
     # Wait for the page to load
     sleep(5)  # Adjust the sleep time based on your internet speed and page load time
 
-    for key, value in source_name2tag[web_site_name].items():
+    elements = None
+    for key, value_list in source_name2tag[web_site_name].items():
         if key == 'class':
-            elements = driver.find_elements(By.CLASS_NAME, value)
+            for value in value_list:
+                elements = driver.find_elements(By.CLASS_NAME, value)
+                if elements:
+                    break
         elif key == 'tag':
-            elements = driver.find_elements(By.TAG_NAME, value)
+            for value in value_list:
+                elements = driver.find_elements(By.TAG_NAME, value)
+                if elements:
+                    break
         if elements:
             break
 
+    if elements is None:
+        return {
+            'status':
+                {
+                    "code": 1,
+                    "message": "Список поддерживаемых сайтов: {}".format(", ".join(source_name2tag.keys()))
+                },
+            'content':
+                {
+                'paragraphs': None
+                }
+        }
     paragraphs = []
     # Iterate through the elements and print their text content
     for element in elements:

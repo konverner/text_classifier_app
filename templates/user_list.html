@@ -88,8 +88,14 @@
 <body>
 
     <div class="header">
-        <button onclick="logout()">Выход</button>
+        <button onclick="goBack()">Назад</button>
     </div>
+
+    <div id="historyContainer">
+        <!-- User search history will be displayed here -->
+    </div>
+
+    <script src="history.js"></script>
 
     <div class="container">
         <h2>Список пользователей</h2>
@@ -109,8 +115,8 @@
     </div>
 
     <script>
-        function logout() {
-            window.location.href = '/login';
+        function goBack() {
+            window.location.href = '/admin_page';
         }
 
         async function deleteUser(userLogin) {
@@ -129,18 +135,39 @@
         }
 
         async function viewHistory(userLogin) {
-            let response = await fetch(`/api/user_history/${userLogin}`, {
-                method: 'GET'
-            });
+    try {
+        let response = await fetch(`/api/user_history/${userLogin}`, {
+            method: 'GET'
+        });
 
-            if (response.ok) {
-                let history = await response.json();
-                let historyString = history.map(item => `URL: ${item.url}, Result: ${item.result}`).join('\n');
-                alert(`История пользователя ${userLogin}:\n${historyString}`);
+        if (response.ok) {
+            let history = await response.json();
+            let historyContainer = document.getElementById('historyContainer');
+            historyContainer.innerHTML = ''; // Clear any existing history
+
+            if (history.length > 0) {
+                let historyList = document.createElement('ul');
+                history.forEach(item => {
+                    let listItem = document.createElement('li');
+                    listItem.textContent = `URL: ${item.url}, ${item.result}`;
+                    historyList.appendChild(listItem);
+                });
+                historyContainer.appendChild(historyList);
             } else {
-                alert("Ошибка при получении истории пользователя.");
+                historyContainer.textContent = 'История этого пользователя пуста.';
             }
+        } else {
+            showError('Ошибка при получении истории пользователя.');
         }
+    } catch (error) {
+        showError('Ошибка при получении истории пользователя.');
+    }
+}
+
+    function showError(message) {
+        let historyContainer = document.getElementById('historyContainer');
+        historyContainer.textContent = message;
+    }
     </script>
 
 </body>

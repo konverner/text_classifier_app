@@ -150,7 +150,7 @@
 
     <script>
         function logout() {
-            window.location.href = '/index';;
+            window.location.href = '/';
         }
 
         function viewHistory() {
@@ -161,7 +161,7 @@
             window.location.href = '/user_list';  // Перейти на страницу с пользователями
         }
 
-        function checkNews() {
+        async function checkNews() {
             var url = document.getElementById('newsUrl').value;
             if(url === "") {
                 alert("Пожалуйста, введите ссылку на новость.");
@@ -169,13 +169,23 @@
             }
             document.getElementById('newsText').innerText = "Загрузка новости с " + url;
             document.getElementById('resultText').innerText = "Проверка новости на достоверность...";
-            
-            // Здесь будет ваш код для проверки новости
-            // В данном примере просто имитируется процесс проверки
-            setTimeout(function() {
-                document.getElementById('newsText').innerText = "Пример текста новости с " + url;
-                document.getElementById('resultText').innerText = "Результат проверки: Ложная новость";
-            }, 2000);
+
+            try {
+                let response = await fetch("/api/check_news", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                let data = await response.json();
+                document.getElementById('newsText').innerText = data.news_text;
+                document.getElementById('resultText').innerText = data.result;
+            } catch (error) {
+                document.getElementById('newsText').innerText = "Ошибка загрузки новости";
+                document.getElementById('resultText').innerText = "Ошибка проверки новости";
+            }
         }
     </script>
 

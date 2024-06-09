@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from typing import Dict, List
 
 from language_model import BertModel
-from parser import parse_page
+from parser_utils import parse_page
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -121,19 +121,16 @@ async def check_news(request: NewsCheckRequest, user: str = Depends(get_current_
     if not user:
         return JSONResponse(content={"error": "Необходима авторизация"}, status_code=403)
     
-    # response = parse_page(request.url)
+    response = parse_page(request.url)
     
-    # if response['status']['code'] == 0:
-    #     language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
-    #     result = f"Вероятность фейковой новости: {round(1 - language_model_output['score'],3)}"
+    if response['status']['code'] == 0:
+        language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
+        result = f"Вероятность фейковой новости: {round(1 - language_model_output['score'],3)}"
 
-    # if response['status']['code'] == 1:
-    #     result = response['status']['message']
+    if response['status']['code'] == 1:
+        result = response['status']['message']
     
-    # news_text = response['content']['paragraphs']
-
-    news_text = "Здесь будет текст новости"
-    result = f"Вероятность фейковой новости {0.0042}%"
+    news_text = response['content']['paragraphs']
 
     # Добавление в историю
     user_history[user].append({
@@ -146,4 +143,4 @@ async def check_news(request: NewsCheckRequest, user: str = Depends(get_current_
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app)
