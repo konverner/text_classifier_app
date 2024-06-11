@@ -132,6 +132,11 @@ async def check_news(request: NewsCheckRequest, user: str = Depends(get_current_
     
     news_text = response['content']['paragraphs']
 
+    # <=0.3 то к этому значению прибавлялось 0.31
+    if type(result) is float:
+        if result <= 0.3:
+            result += 0.31
+
     # Добавление в историю
     user_history[user].append({
         "url": request.url,
