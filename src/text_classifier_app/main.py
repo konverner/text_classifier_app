@@ -18,7 +18,7 @@ users: Dict[str, str] = {"admin": generate_password_hash("admin")}
 user_history: Dict[str, List[Dict[str, str]]] = {user: [] for user in users}
 
 # Языковая модель
-language_model = BertModel("seara/rubert-tiny2-russian-sentiment")
+language_model = BertModel("G:/My Drive/workspace/Orders/archive/00108/transformer_model")
 
 # Модель для формы регистрации
 class RegisterForm(BaseModel):
@@ -125,17 +125,17 @@ async def check_news(request: NewsCheckRequest, user: str = Depends(get_current_
     
     if response['status']['code'] == 0:
         language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
-        result = f"Вероятность фейковой новости: {round(1 - language_model_output['score'],3)}"
+        score = round(1 - language_model_output['score'], 3)
+        # <=0.3 то к этому значению прибавлялось 0.31
+        if score <= 0.3:
+            score += 0.31
+        result = f"Вероятность фейковой новости: {score}"
 
     if response['status']['code'] == 1:
         result = response['status']['message']
     
     news_text = response['content']['paragraphs']
 
-    # <=0.3 то к этому значению прибавлялось 0.31
-    if type(result) is float:
-        if result <= 0.3:
-            result += 0.31
 
     # Добавление в историю
     user_history[user].append({
