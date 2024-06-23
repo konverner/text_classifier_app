@@ -11,7 +11,7 @@ source_name2tag = {
     "dzen.ru": {
         "class": [
             "news-story-redesign__summarization-item",
-            "article-link__no-carrot-accents"
+            "article-link__noCarrotAccents-16"
         ]
     },
     "ria.ru": {"class": ["article__block"]},
