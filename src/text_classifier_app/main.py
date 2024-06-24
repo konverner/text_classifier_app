@@ -1,50 +1,30 @@
 from fastapi import FastAPI, Form, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
-from typing import List
-from sqlalchemy import Column, Integer, String, create_engine, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+
 from sqlalchemy.orm import sessionmaker, relationship
 
 from language_model import BertModel
 from parser_utils import parse_page
+from schema import User, History, Base, NewsCheckRequest
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-DATABASE_URL = "sqlite:///./test.db"
+DATABASE_URL = "sqlite:///./news_check_app.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    login = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-
-
-class History(Base):
-    __tablename__ = "histories"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    url = Column(String)
-    news_text = Column(String)
-    result = Column(String)
-    user = relationship("User", back_populates="histories")
 
 
 User.histories = relationship("History", back_populates="user", cascade="all, delete, delete-orphan")
-
 Base.metadata.create_all(bind=engine)
 
 # Языковая модель
 language_model = BertModel("seara/rubert-tiny2-russian-sentiment")
-
 
 # Dependency to get DB session
 def get_db():
@@ -53,23 +33,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# Модель для формы регистрации
-class RegisterForm(BaseModel):
-    login: str
-    password: str
-
-
-# Модель для формы входа
-class LoginForm(BaseModel):
-    login: str
-    password: str
-
-
-class NewsCheckRequest(BaseModel):
-    url: str
-
 
 def get_current_user(request: Request, db: SessionLocal = Depends(get_db)):
     user_login = request.cookies.get("user")
@@ -106,7 +69,7 @@ async def get_admin_page(request: Request):
 @app.get("/user_list", response_class=HTMLResponse)
 async def get_user_list(request: Request, db: SessionLocal = Depends(get_db)):
     users = db.query(User).all()
-    user_list = [{"login": user.login} for user in users]
+    user_list = [{"login": user.login} for user in users if user.login != "admin"]
     return templates.TemplateResponse("user_list.html", {"request": request, "users": user_list})
 
 
@@ -171,20 +134,7 @@ async def delete_user(login: str, user: User = Depends(get_current_user), db: Se
 
 @app.post("/api/check_news", response_class=JSONResponse)
 async def check_news(request: NewsCheckRequest, user: User = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
-    if not user:
-        return JSONResponse(content={"error": "Необходима авторизация"}, status_code=403)
-    # response = parse_page(request.url)
-    response = {
-        'status':
-            {
-                "code": 0,
-                "message": "success"
-            },
-        'content':
-            {
-                'paragraphs': "test test"
-            }
-    }
+    response = parse_page(request.url)
     if response['status']['code'] == 0:
         language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
         score = round(1 - language_model_output['score'], 3)
@@ -194,9 +144,10 @@ async def check_news(request: NewsCheckRequest, user: User = Depends(get_current
     else:
         result = response['status']['message']
     news_text = response['content']['paragraphs']
-    new_history = History(user_id=user.id, url=request.url, news_text=news_text, result=result)
-    db.add(new_history)
-    db.commit()
+    if user:
+        new_history = History(user_id=user.id, url=request.url, news_text=news_text, result=result)
+        db.add(new_history)
+        db.commit()
     return {"news_text": news_text, "result": result}
 
 
