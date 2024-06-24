@@ -3,7 +3,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
-from typing import Dict, List
+from typing import List
+from sqlalchemy import Column, Integer, String, create_engine, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 
 from language_model import BertModel
 from parser_utils import parse_page
@@ -11,14 +14,45 @@ from parser_utils import parse_page
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# Временное хранилище пользователей
-users: Dict[str, str] = {"admin": generate_password_hash("admin")}
+DATABASE_URL = "sqlite:///./test.db"
 
-# Временное хранилище истории проверок для каждого пользователя
-user_history: Dict[str, List[Dict[str, str]]] = {user: [] for user in users}
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    login = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+
+
+class History(Base):
+    __tablename__ = "histories"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    url = Column(String)
+    news_text = Column(String)
+    result = Column(String)
+    user = relationship("User", back_populates="histories")
+
+
+User.histories = relationship("History", back_populates="user", cascade="all, delete, delete-orphan")
+
+Base.metadata.create_all(bind=engine)
 
 # Языковая модель
 language_model = BertModel("seara/rubert-tiny2-russian-sentiment")
+
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 # Модель для формы регистрации
@@ -37,8 +71,11 @@ class NewsCheckRequest(BaseModel):
     url: str
 
 
-def get_current_user(request: Request):
-    return request.cookies.get("user")
+def get_current_user(request: Request, db: SessionLocal = Depends(get_db)):
+    user_login = request.cookies.get("user")
+    if user_login:
+        return db.query(User).filter(User.login == user_login).first()
+    return None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -67,103 +104,102 @@ async def get_admin_page(request: Request):
 
 
 @app.get("/user_list", response_class=HTMLResponse)
-async def get_user_list(request: Request):
-    # Prepare user data for the template
-    user_list = [{"login": login} for login in users]
+async def get_user_list(request: Request, db: SessionLocal = Depends(get_db)):
+    users = db.query(User).all()
+    user_list = [{"login": user.login} for user in users]
     return templates.TemplateResponse("user_list.html", {"request": request, "users": user_list})
 
 
 @app.get("/history", response_class=HTMLResponse)
-async def get_history_page(request: Request, user: str = Depends(get_current_user)):
-    return templates.TemplateResponse("history.html", {"request": request, "history": user_history.get(user, [])})
+async def get_history_page(request: Request, user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("history.html", {"request": request, "history": user.histories if user else []})
 
 
 @app.get("/api/history", response_class=JSONResponse)
-async def get_history(user: str = Depends(get_current_user)):
-    return JSONResponse(content=user_history.get(user, []))
+async def get_history(user: User = Depends(get_current_user)):
+    if user:
+        return JSONResponse(content=[{"url": h.url, "news_text": h.news_text, "result": h.result} for h in user.histories])
+    return JSONResponse(content=[])
 
 
 @app.get("/api/user_history/{login}", response_class=JSONResponse)
-async def get_user_history(login: str, user: str = Depends(get_current_user)):
-    if user != "admin":
+async def get_user_history(login: str, user: User = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
+    if user.login != "admin":
         raise HTTPException(status_code=403, detail="Недостаточно прав для просмотра истории пользователя.")
-
-    if login not in users:
+    user_to_check = db.query(User).filter(User.login == login).first()
+    if not user_to_check:
         raise HTTPException(status_code=404, detail="Пользователь не найден.")
-
-    return JSONResponse(content=user_history.get(login, []))
+    return JSONResponse(content=[{"url": h.url, "news_text": h.news_text, "result": h.result} for h in user_to_check.histories])
 
 
 @app.post("/register", response_class=HTMLResponse)
-async def register(request: Request, login: str = Form(...), password: str = Form(...)):
-    if login in users:
+async def register(request: Request, login: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+    user = db.query(User).filter(User.login == login).first()
+    if user:
         return HTMLResponse("Пользователь с таким логином уже существует!", status_code=400)
-
     hashed_password = generate_password_hash(password)
-    users[login] = hashed_password
-    user_history[login] = []
+    new_user = User(login=login, hashed_password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     return RedirectResponse(url="/login", status_code=302)
 
 
 @app.post("/login", response_class=HTMLResponse)
-async def login(request: Request, login: str = Form(...), password: str = Form(...)):
-    if login not in users or not check_password_hash(users[login], password):
+async def login(request: Request, login: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+    user = db.query(User).filter(User.login == login).first()
+    if not user or not check_password_hash(user.hashed_password, password):
         return HTMLResponse("Неправильный логин или пароль!", status_code=400)
-
     response = RedirectResponse(url="/admin_page" if login == "admin" else "/user_page", status_code=302)
     response.set_cookie(key="user", value=login)
     return response
 
 
 @app.delete("/delete_user/{login}", response_class=JSONResponse)
-async def delete_user(login: str, user: str = Depends(get_current_user)):
-    if user != "admin":
+async def delete_user(login: str, user: User = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
+    if user.login != "admin":
         raise HTTPException(status_code=403, detail="Недостаточно прав для удаления пользователя.")
-
-    if login not in users:
+    user_to_delete = db.query(User).filter(User.login == login).first()
+    if not user_to_delete:
         raise HTTPException(status_code=404, detail="Пользователь не найден.")
-
     if login == "admin":
         raise HTTPException(status_code=400, detail="Невозможно удалить администратора.")
-
-    # Удаление пользователя и его истории
-    del users[login]
-    del user_history[login]
-
+    db.delete(user_to_delete)
+    db.commit()
     return JSONResponse(content={"message": "Пользователь удален."})
 
 
 @app.post("/api/check_news", response_class=JSONResponse)
-async def check_news(request: NewsCheckRequest, user: str = Depends(get_current_user)):
+async def check_news(request: NewsCheckRequest, user: User = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
     if not user:
         return JSONResponse(content={"error": "Необходима авторизация"}, status_code=403)
-
-    response = parse_page(request.url)
-
+    # response = parse_page(request.url)
+    response = {
+        'status':
+            {
+                "code": 0,
+                "message": "success"
+            },
+        'content':
+            {
+                'paragraphs': "test test"
+            }
+    }
     if response['status']['code'] == 0:
         language_model_output = language_model.run(response["content"]['paragraphs'][:2024] + "...")
         score = round(1 - language_model_output['score'], 3)
-        # <=0.3 то к этому значению прибавлялось 0.31
         if score <= 0.3:
             score += 0.31
         result = f"Вероятность фейковой новости: {score}"
-
-    if response['status']['code'] == 1:
+    else:
         result = response['status']['message']
-
     news_text = response['content']['paragraphs']
-
-    # Добавление в историю
-    user_history[user].append({
-        "url": request.url,
-        "news_text": news_text,
-        "result": result
-    })
-
+    new_history = History(user_id=user.id, url=request.url, news_text=news_text, result=result)
+    db.add(new_history)
+    db.commit()
     return {"news_text": news_text, "result": result}
 
 
 if __name__ == '__main__':
     import uvicorn
-
     uvicorn.run(app)
